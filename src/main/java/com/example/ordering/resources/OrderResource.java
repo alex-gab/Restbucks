@@ -1,6 +1,8 @@
 package com.example.ordering.resources;
 
-import com.example.ordering.representations.Link;
+import com.example.ordering.activities.ReadOrderActivity;
+import com.example.ordering.representations.OrderRepresentation;
+import com.example.ordering.representations.RestbucksUri;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -8,7 +10,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 
 @Path("/order")
 public class OrderResource {
@@ -20,8 +21,11 @@ public class OrderResource {
     @Path("/{orderId}")
     @Produces("application/vnd.restbucks+xml")
     public final Response getOrder() {
-        final URI uri = uriInfo.getRequestUri();
-        final Link link = new Link("someRel", "someUri", "someMediaType");
-        return Response.ok().entity(link).build();
+        try {
+            final OrderRepresentation responseRepresentation = new ReadOrderActivity().retrieveByUri(new RestbucksUri(uriInfo.getRequestUri()));
+            return Response.ok().entity(responseRepresentation).build();
+        } catch (Exception e) {
+            return Response.serverError().build();
+        }
     }
 }

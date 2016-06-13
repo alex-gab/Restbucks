@@ -2,6 +2,8 @@ package com.example.ordering.representations;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import static com.example.ordering.common.Preconditions.checkNotNull;
 
@@ -20,9 +22,29 @@ public final class Link {
     private Link() {
     }
 
-    public Link(final String rel, final String uri, final String mediaType) {
-        this.rel = checkNotNull(rel, "rel");
-        this.uri = checkNotNull(uri, "uri");
+    public Link(final String name, final RestbucksUri uri, final String mediaType) {
+        this.rel = checkNotNull(name, "name");
+        this.uri = checkNotNull(uri, "uri").getFullUri().toString();
         this.mediaType = checkNotNull(mediaType, "mediaType");
+    }
+
+    public Link(final String rel, final RestbucksUri uri) {
+        this(rel, uri, Representation.RESTBUCKS_MEDIA_TYPE);
+    }
+
+    public String getRelValue() {
+        return rel;
+    }
+
+    public URI getUri() {
+        try {
+            return new URI(uri);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String getMediaType() {
+        return mediaType;
     }
 }
