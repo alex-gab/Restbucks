@@ -1,5 +1,6 @@
 package com.example.ordering.resources;
 
+import com.example.ordering.activities.NoSuchOrderException;
 import com.example.ordering.activities.ReadOrderActivity;
 import com.example.ordering.representations.OrderRepresentation;
 import com.example.ordering.representations.RestbucksUri;
@@ -24,6 +25,8 @@ public class OrderResource {
         try {
             final OrderRepresentation responseRepresentation = new ReadOrderActivity().retrieveByUri(new RestbucksUri(uriInfo.getRequestUri()));
             return Response.ok().entity(responseRepresentation).build();
+        } catch (final NoSuchOrderException nsoe) {
+            return Response.status(Response.Status.NOT_FOUND).build();
         } catch (Exception e) {
             return Response.serverError().build();
         }
