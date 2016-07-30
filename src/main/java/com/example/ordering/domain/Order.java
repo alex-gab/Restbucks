@@ -17,6 +17,13 @@ public final class Order {
         this.items = checkNotNull(items, "items");
     }
 
+    public Order(final Location location, final OrderStatus status, final List<Item> items) {
+        this.location = checkNotNull(location, "location");
+        this.status = checkNotNull(status, "status");
+        this.items = checkNotNull(items, "items");
+
+    }
+
     public final double calculateCost() {
         double total = 0.0;
         for (Item item : items) {
@@ -35,5 +42,9 @@ public final class Order {
 
     public final OrderStatus getStatus() {
         return status;
+    }
+
+    public void setStatus(final OrderStatus status) {
+        this.status = checkNotNull(status, "status");
     }
 }

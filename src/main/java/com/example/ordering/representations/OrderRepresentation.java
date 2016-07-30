@@ -1,18 +1,21 @@
 package com.example.ordering.representations;
 
-import com.example.ordering.activities.UriExchange;
+import com.example.ordering.activities.InvalidOrderException;
 import com.example.ordering.domain.Item;
 import com.example.ordering.domain.Location;
 import com.example.ordering.domain.Order;
 import com.example.ordering.domain.OrderStatus;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
-import static com.example.ordering.common.Preconditions.checkNotNull;
-import static com.example.ordering.domain.OrderStatus.*;
 import static com.example.ordering.representations.Representation.RESTBUCKS_NAMESPACE;
 
 @XmlRootElement(name = "order", namespace = RESTBUCKS_NAMESPACE)
@@ -37,27 +40,26 @@ public final class OrderRepresentation extends Representation {
         this.links = Arrays.asList(links);
     }
 
-    public static OrderRepresentation createResponseOrderRepresentation(final Order order, final RestbucksUri orderUri) {
-        checkNotNull(order, "order");
-        checkNotNull(orderUri, "orderUri");
+    public static OrderRepresentation fromXmlString(final String xmlRepresentation) {
+        try {
+            final JAXBContext context = JAXBContext.newInstance(OrderRepresentation.class);
+            final Unmarshaller unmarshaller = context.createUnmarshaller();
+            return (OrderRepresentation) unmarshaller.unmarshal(new ByteArrayInputStream(xmlRepresentation.getBytes()));
+        } catch (JAXBException e) {
+            throw new InvalidOrderException(e);
+        }
+    }
 
-        final RestbucksUri paymentUri = new RestbucksUri(orderUri.getBaseUri() + "/payment/" + orderUri.getId().toString());
+    public final Order getOrder() {
+        return new Order(location, status, items);
+    }
 
-        final OrderStatus status = order.getStatus();
-        if (status == UNPAID) {
-            return new OrderRepresentation(order,
-                    new Link(RELATIONS_URI + "cancel", orderUri),
-                    new Link(RELATIONS_URI + "payment", paymentUri),
-                    new Link(RELATIONS_URI + "update", orderUri),
-                    new Link(SELF_REL_VALUE, orderUri));
-        } else if (status == PREPARING) {
-            return new OrderRepresentation(order, new Link(SELF_REL_VALUE, orderUri));
-        } else if (status == READY) {
-            return new OrderRepresentation(order, new Link(RELATIONS_URI + "receipt", UriExchange.receiptForPayment(paymentUri)));
-        } else if (status == TAKEN) {
-            return new OrderRepresentation(order);
+    public Link getUpdateLink() {
+        final Optional<Link> optional = getLinkByName(RELATIONS_URI + "update");
+        if (optional.isPresent()) {
+            return optional.get();
         } else {
-            throw new RuntimeException("Unknown Order Status");
+            throw new UnsupportedOperationException("This representation does not have an update link");
         }
     }
 }
